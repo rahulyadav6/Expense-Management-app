@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const zod = require("zod");
+const jwt = require("json-web-token");
+const secret = require("./config");
+
 
 const { User } = require("../db");
 
@@ -8,7 +11,7 @@ router.get("/",(req,res)=>{
     res.json({
         message:"Welcome to user page"
     })
-})
+}) 
 
 const signupSchema = zod.object({
     email: zod.string().email("Invalid email format"),
@@ -59,6 +62,23 @@ router.post("/signup", async(req,res)=>{
         res.status(500).json({error:"Internal server Error"});
     }
 })
+
+router.post("/signin", async(req,res)=>{
+    console.log(secret);
+    const { email, password } = req.body;
+    const isValidUser = await User.findOne({ email });
+    if(!isValidUser){
+        res.status(400).json({error: "Not a valid user sign up first "});
+    }
+
+    const token = jwt.sign({email}, secret, {expiresIn: '1h' });
+    res.json(
+        {
+            msg:"Logged in successfully ",
+            token: token
+        });
+
+});
 
 
 module.exports = router;
